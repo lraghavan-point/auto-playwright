@@ -11,6 +11,7 @@ export type StepOptions = {
   openaiBaseUrl?: string;
   openaiDefaultQuery?: {};
   openaiDefaultHeaders?: {};
+  instruction?: string;
 };
 
 export type TaskMessage = {
@@ -19,6 +20,7 @@ export type TaskMessage = {
     dom: string;
   };
   options?: StepOptions;
+
 };
 
 export type TaskResult = {

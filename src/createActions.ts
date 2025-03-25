@@ -21,48 +21,48 @@ export const createActions = (
   return {
     locator_pressKey: {
       function: async (args: { elementId: string; key: string }) => {
-          const { elementId, key } = args;
-          await getLocator(elementId).press(key);
-          return { success: true };
+        const { elementId, key } = args;
+        await getLocator(elementId).press(key);
+        return { success: true };
       },
       name: "locator_pressKey",
       description: "Presses a key while focused on the specified element.",
       parse: (args: string) => {
-          return z
-              .object({
-                  elementId: z.string(),
-                  key: z.string(),
-              })
-              .parse(JSON.parse(args));
+        return z
+          .object({
+            elementId: z.string(),
+            key: z.string(),
+          })
+          .parse(JSON.parse(args));
       },
       parameters: {
-          type: "object",
-          properties: {
-              elementId: { type: "string" },
-              key: { type: "string", description: "The name of the key to press, e.g., 'Enter', 'ArrowUp', 'a'." },
-          },
+        type: "object",
+        properties: {
+          elementId: { type: "string" },
+          key: { type: "string", description: "The name of the key to press, e.g., 'Enter', 'ArrowUp', 'a'." },
+        },
       },
     },
     page_pressKey: {
       function: async (args: { elementId: string; key: string }) => {
-          const { key } = args;
-          await page.keyboard.press(key);
-          return { success: true };
+        const { key } = args;
+        await page.keyboard.press(key);
+        return { success: true };
       },
       name: "page_pressKey",
       description: "Presses a key globally on the page.",
       parse: (args: string) => {
-          return z
-              .object({
-                  key: z.string(),
-              })
-              .parse(JSON.parse(args));
+        return z
+          .object({
+            key: z.string(),
+          })
+          .parse(JSON.parse(args));
       },
       parameters: {
-          type: "object",
-          properties: {
-              key: { type: "string", description: "The name of the key to press, e.g., 'Enter', 'ArrowDown', 'b'." },
-          },
+        type: "object",
+        properties: {
+          key: { type: "string", description: "The name of the key to press, e.g., 'Enter', 'ArrowDown', 'b'." },
+        },
       },
     },
     locateElement: {
@@ -537,30 +537,90 @@ export const createActions = (
         },
       },
     },
-    page_goto: {
-      function: async (args: { url: string }) => {
-        return {
-          url: await page.goto(args.url),
-        };
+    // ... (other imports and code)
+    clickLinkByName: {
+      function: async (args: { linkName: string }) => {
+        try {
+          await page.getByRole('link', { name: args.linkName, exact: true }).click();
+          return { success: true };
+        } catch (error) {
+          return { error: error.message };
+        }
       },
-      name: "page_goto",
-      description: "Set a value to the input field.",
+      name: "clickLinkByName",
+      description: "Clicks a link by its accessible name.",
       parse: (args: string) => {
         return z
           .object({
-            cssLocator: z.string(),
-            value: z.string(),
+            linkName: z.string(),
           })
           .parse(JSON.parse(args));
       },
       parameters: {
         type: "object",
         properties: {
-          value: {
+          linkName: {
             type: "string",
+            description: "The accessible name of the link to click.",
           },
-          cssLocator: {
+        },
+      },
+    },
+
+    clickByText: {
+      function: async (args: { text: string; nth?: number }) => {
+        let locator = page.getByText(args.text, { exact: true });
+        if (args.nth !== undefined) {
+          locator = locator.nth(args.nth - 1); // Playwright uses 0-based indexing
+        }
+        await locator.click();
+        return { success: true };
+      },
+      name: "clickByText",
+      description: "Clicks an element by its exact text content, with optional 'nth' selection.",
+      parse: (args: string) => {
+        return z
+          .object({
+            text: z.string(),
+            nth: z.number().optional(), // Corrected line
+          })
+          .parse(JSON.parse(args));
+      },
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
             type: "string",
+            description: "The exact text content of the element to click.",
+          },
+          nth: {
+            type: "integer",
+            description: "The index of the element to click (1-based).",
+          },
+        },
+      },
+    },
+
+    page_goto: {
+      function: async (args: { url: string }) => {
+        await page.goto(args.url);
+        return { success: true };
+      },
+      name: "page_goto",
+      description: "Navigates the page to the specified URL.",
+      parse: (args: string) => {
+        return z
+          .object({
+            url: z.string(),
+          })
+          .parse(JSON.parse(args));
+      },
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "The URL to navigate to.",
           },
         },
       },
@@ -651,7 +711,7 @@ export const createActions = (
       },
     },
     resultQuery: {
-      function: (args: { assertion: boolean }) => {
+      function: (args: { query: string }) => {
         return args;
       },
       parse: (args: string) => {

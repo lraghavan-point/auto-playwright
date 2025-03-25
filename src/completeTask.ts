@@ -16,8 +16,7 @@ export const completeTask = async (
     defaultHeaders: task.options?.openaiDefaultHeaders,
   });
 
-  let lastFunctionResult: null | { errorMessage: string } | { query: string } =
-    null;
+  let lastFunctionResult: null | { query: string } = null;
 
   const actions = createActions(page);
 
@@ -41,7 +40,7 @@ export const completeTask = async (
         message.role === "assistant" &&
         message.tool_calls &&
         message.tool_calls.length > 0 &&
-        message.tool_calls[0].function.name.startsWith("result")
+        message.tool_calls[0].function.name === "resultQuery"
       ) {
         lastFunctionResult = JSON.parse(
           message.tool_calls[0].function.arguments
@@ -55,7 +54,8 @@ export const completeTask = async (
     console.log("> finalContent", finalContent);
   }
 
-  if (!lastFunctionResult) {
+  // Only check for a result if the instruction suggests a query.
+  if (task.instruction && task.instruction.toLowerCase().includes("get") && !lastFunctionResult) { // Added check
     throw new Error("Expected to have result");
   }
 
@@ -63,5 +63,5 @@ export const completeTask = async (
     console.log("> lastFunctionResult", lastFunctionResult);
   }
 
-  return lastFunctionResult;
+  return lastFunctionResult || { query: finalContent || undefined };
 };

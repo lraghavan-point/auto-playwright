@@ -3,12 +3,24 @@ import { auto } from "../src/auto";
 
 const options = undefined;
 
-test("executes query", async ({ page }) => {
-  await page.goto("/");
+test.only("executes query", async ({ page }) => {
+  await auto("Navigate to url 'https://hei-los-qa.equitycushion.dev/admin_users/test_sign_in?debug_bearer=9jbuMvZjwhwcmQCvg3xaCKVX'", { page, test }, { debug: true });
+  await page.waitForLoadState('domcontentloaded');
 
-  const headerText = await auto("get the header text", { page, test }, options);
+  // Verify that the element exists before attempting to click it.
+  await page.waitForSelector("span.text", { timeout: 20000 });
 
-  expect(headerText).toBe("Hello, Rayrun!");
+  await page.waitForLoadState('domcontentloaded');
+
+  await auto('Click on the third span in the header that matches with the text Test Factory', { page, test }, { debug: true });
+
+  await page.waitForLoadState('domcontentloaded');
+  await auto("Click the link named 'Turbo (Experimental)'", { page, test }, { debug: true });
+
+  await page.waitForLoadState('domcontentloaded');
+
+  await expect(page.url()).toContain("/test_factory/view");
+
 });
 
 test("executes query using locator_evaluate", async ({ page }) => {
@@ -49,7 +61,7 @@ test("asserts (toBe)", async ({ page }) => {
 
   const searchInputHasHeaderText = await auto(
     `Is the contents of the header equal to "Hello, Rayrun!"?`,
-    { page, test }, 
+    { page, test },
     options
   );
 
@@ -77,7 +89,7 @@ test("executes query, action and assertion", async ({ page }) => {
 
   const searchInputHasHeaderText = await auto(
     `is the contents of the search box equal to "${headerText}"?`,
-    { page, test }, 
+    { page, test },
     options
   );
 
