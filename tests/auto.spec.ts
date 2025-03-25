@@ -19,4 +19,8 @@ test.only("Navigate to test factory turbo to generate a docket ", async ({ page 
 
   // Assert that the URL contains the expected path.
   await expect(page.url()).toContain("/test_factory/view");
+
+  await page.waitForLoadState('domcontentloaded');
+
+  await auto("Click the button named 'Generate'", { page, test }, { debug: true });
 });
