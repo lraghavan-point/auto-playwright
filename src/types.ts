@@ -20,11 +20,13 @@ export type TaskMessage = {
     dom: string;
   };
   options?: StepOptions;
-
+  instruction?: string;
 };
 
 export type TaskResult = {
   assertion?: boolean;
   query?: string;
   errorMessage?: string;
+  success?: boolean; // Add success
+  error?: string; // Add error
 };

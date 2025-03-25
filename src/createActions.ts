@@ -569,12 +569,20 @@ export const createActions = (
 
     clickByText: {
       function: async (args: { text: string; nth?: number }) => {
-        let locator = page.getByText(args.text, { exact: true });
-        if (args.nth !== undefined) {
-          locator = locator.nth(args.nth - 1); // Playwright uses 0-based indexing
+        try {
+          let locator = page.locator(`:text-is("${args.text}")`); // Use a robust locator.
+
+          if (args.nth !== undefined) {
+            locator = locator.nth(args.nth - 1); // Playwright uses 0-based indexing
+          }
+
+          await locator.waitFor({ state: 'visible', timeout: 20000 }); // Wait for visibility.
+          await locator.click({ force: true }); // Force click if needed.
+
+          return { success: true };
+        } catch (error) {
+          return { error: error.message };
         }
-        await locator.click();
-        return { success: true };
       },
       name: "clickByText",
       description: "Clicks an element by its exact text content, with optional 'nth' selection.",
@@ -582,7 +590,7 @@ export const createActions = (
         return z
           .object({
             text: z.string(),
-            nth: z.number().optional(), // Corrected line
+            nth: z.number().optional(),
           })
           .parse(JSON.parse(args));
       },
@@ -706,6 +714,38 @@ export const createActions = (
         properties: {
           assertion: {
             type: "boolean",
+          },
+        },
+      },
+    },
+    clickDropdownByText: {
+      function: async (args: { dropdownText: string }) => {
+        try {
+          // Wait for the dropdown to appear.
+          await page.waitForSelector('.ui.dropdown.link.item', { timeout: 20000 });
+
+          // Click the dropdown.
+          await page.locator('.ui.dropdown.link.item', { hasText: args.dropdownText }).click();
+          return { success: true };
+        } catch (error) {
+          return { error: error.message };
+        }
+      },
+      name: "clickDropdownByText",
+      description: "Clicks a dropdown by its visible text.",
+      parse: (args: string) => {
+        return z
+          .object({
+            dropdownText: z.string(),
+          })
+          .parse(JSON.parse(args));
+      },
+      parameters: {
+        type: "object",
+        properties: {
+          dropdownText: {
+            type: "string",
+            description: "The text of the dropdown to click.",
           },
         },
       },
