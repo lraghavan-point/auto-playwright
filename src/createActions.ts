@@ -537,7 +537,139 @@ export const createActions = (
         },
       },
     },
-    // ... (other imports and code)
+    selectOption: {
+      function: async (args: { selector: string; option: string }) => {
+        try {
+          // Wait for the select element to be visible.
+          await page.waitForSelector(args.selector, { visible: true });
+
+          await page.selectOption(args.selector, { label: args.option });
+          return { success: true };
+        } catch (error) {
+          return { error: error.message };
+        }
+      },
+      name: "selectOption",
+      description: "Selects an option from a dropdown.",
+      parse: (args: string) => {
+        return z
+          .object({
+            selector: z.string(),
+            option: z.string(),
+          })
+          .parse(JSON.parse(args));
+      },
+      parameters: {
+        type: "object",
+        properties: {
+          selector: {
+            type: "string",
+            description: "CSS selector of the dropdown.",
+          },
+          option: {
+            type: "string",
+            description: "The label of the option to select.",
+          },
+        },
+      },
+    },
+    clickIconNearText: {
+      function: async (args: { text: string }) => {
+        try {
+          await page.locator(`i:near(:text("${args.text}"))`).click();
+          return { success: true };
+        } catch (error) {
+          return { error: error.message };
+        }
+      },
+      name: "clickIconNearText",
+      description: "Clicks an icon near a specified text.",
+      parse: (args: string) => {
+        return z
+          .object({
+            text: z.string(),
+          })
+          .parse(JSON.parse(args));
+      },
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "The text near the icon.",
+          },
+        },
+      },
+    },
+    clickItemWithExactText: {
+      function: async (args: { text: string }) => {
+        try {
+          await page
+            .locator('.item')
+            .filter({ hasText: new RegExp(`^${args.text}$`) })
+            .click();
+          return { success: true };
+        } catch (error) {
+          return { error: error.message };
+        }
+      },
+      name: "clickItemWithExactText",
+      description: "Clicks an item with the exact text.",
+      parse: (args: string) => {
+        return z
+          .object({
+            text: z.string(),
+          })
+          .parse(JSON.parse(args));
+      },
+      parameters: {
+        type: "object",
+        properties: {
+          text: {
+            type: "string",
+            description: "The exact text of the item to click.",
+          },
+        },
+      },
+    },
+    selectCustomDropdownOption: {
+      function: async (args: { label: string; option: string }) => {
+        try {
+          // Open the dropdown by clicking the label.
+          await page.locator(`div.field:has-text("${args.label}") .ui.search.dropdown.selection`).click();
+
+          // Select the option by clicking the corresponding .item div.
+          await page.locator('.item', { hasText: args.option }).click();
+
+          return { success: true };
+        } catch (error) {
+          return { error: error.message };
+        }
+      },
+      name: "selectCustomDropdownOption",
+      description: "Selects an option from a custom dropdown.",
+      parse: (args: string) => {
+        return z
+          .object({
+            label: z.string(),
+            option: z.string(),
+          })
+          .parse(JSON.parse(args));
+      },
+      parameters: {
+        type: "object",
+        properties: {
+          label: {
+            type: "string",
+            description: "The label of the custom dropdown.",
+          },
+          option: {
+            type: "string",
+            description: "The option to select.",
+          },
+        },
+      },
+    },
     clickLinkByName: {
       function: async (args: { linkName: string }) => {
         try {
@@ -570,15 +702,12 @@ export const createActions = (
     clickByText: {
       function: async (args: { text: string; nth?: number }) => {
         try {
-          let locator = page.locator(`:text-is("${args.text}")`); // Use a robust locator.
-
+          // Find all spans with the text, then get the nth element.
+          let locator = page.locator('span', { hasText: args.text });
           if (args.nth !== undefined) {
-            locator = locator.nth(args.nth - 1); // Playwright uses 0-based indexing
+            locator = locator.nth(args.nth - 1); // 0-based indexing
           }
-
-          await locator.waitFor({ state: 'visible', timeout: 20000 }); // Wait for visibility.
-          await locator.click({ force: true }); // Force click if needed.
-
+          await locator.click();
           return { success: true };
         } catch (error) {
           return { error: error.message };
